@@ -45,8 +45,9 @@ class Net(Hazelnut.presets.YellowFin.NN):
         super().__init__()
 
         self.add(Conv(4, 3, mode='Same'))
+        self.add(ActivationFunction.ReLU())
         #Residual Layers
-        for _ in range(5):
+        for _ in range(1):
             #self.add(SkipConn('Start'))
             self.add(Conv(4, 3, mode='Same'))
             #self.add(BatchNorm())
@@ -56,8 +57,8 @@ class Net(Hazelnut.presets.YellowFin.NN):
             #self.add(SkipConn('End'))
             self.add(ActivationFunction.ReLU())
 
-        self.add(Conv(4, 3, mode='Same'))
-        self.add(ActivationFunction.ReLU())
+        #self.add(Conv(4, 3, mode='Same'))
+        #self.add(ActivationFunction.ReLU())
 
         self.add(Conv(1, 3, mode='Same'))
         #self.add(BatchNorm())
@@ -68,21 +69,20 @@ class Net(Hazelnut.presets.YellowFin.NN):
         #MLP stuff
         self.add(Linear(784))
         self.add(ActivationFunction.ReLU())
+        #self.add(Linear(100))
+        #self.add(ActivationFunction.ReLU())
         self.add(Linear(100))
         self.add(ActivationFunction.ReLU())
-        self.add(Linear(100))
-        self.add(ActivationFunction.ReLU())
-        self.add(Linear(50))
-        self.add(ActivationFunction.ReLU())
+        #self.add(Linear(50))
+        #self.add(ActivationFunction.ReLU())
         self.add(Linear(10))
-        #self.add(ActivationFunction.tanh())
-        #self.loss = LossFunction.MSE()
+        self.add(ActivationFunction.Sigmoid())
+        self.loss = LossFunction.MSE()
 
-        #Other stuff
-        self.optimizer = Hazelnut.modules.Optimizers.YellowFin(early_stop=False)
+        #self.add(Softmax())
+        #self.loss = CrossEntropy()
 
-        self.add(Softmax())
-        self.loss = CrossEntropy()
+        self.mode = 'gpu'
 
         self.build((1, 28, 28))
 
