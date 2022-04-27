@@ -40,25 +40,28 @@ class CrossEntropy:
     def Backward(self, out, correct_out):
         return out - correct_out
 
-class Net(Hazelnut.presets.YellowFin.NN):
+class Net(Hazelnut.NN):
+#class Net(Hazelnut.NN):
     def __init__(self):
         super().__init__()
+        #super().__init__()
+        Skip = Hazelnut.modules._skip_connection.SkipConnClass()
 
         self.add(Conv(4, 3, mode='Same'))
         self.add(ActivationFunction.ReLU())
         #Residual Layers
-        for _ in range(1):
-            #self.add(SkipConn('Start'))
+        for _ in range(5):
+            self.add(Skip)
             self.add(Conv(4, 3, mode='Same'))
             #self.add(BatchNorm())
             self.add(ActivationFunction.ReLU())
             self.add(Conv(4, 3, mode='Same'))
             #self.add(BatchNorm())
-            #self.add(SkipConn('End'))
+            self.add(Skip)
             self.add(ActivationFunction.ReLU())
 
-        #self.add(Conv(4, 3, mode='Same'))
-        #self.add(ActivationFunction.ReLU())
+        self.add(Conv(4, 3, mode='Same'))
+        self.add(ActivationFunction.ReLU())
 
         self.add(Conv(1, 3, mode='Same'))
         #self.add(BatchNorm())
@@ -76,11 +79,15 @@ class Net(Hazelnut.presets.YellowFin.NN):
         #self.add(Linear(50))
         #self.add(ActivationFunction.ReLU())
         self.add(Linear(10))
-        self.add(ActivationFunction.Sigmoid())
-        self.loss = LossFunction.MSE()
+        #self.add(ActivationFunction.Sigmoid())
+        #self.loss = LossFunction.MSE()
 
-        #self.add(Softmax())
-        #self.loss = CrossEntropy()
+        #self.optimizer = Hazelnut.modules.Optimizers.Momentum(learning_rate=0.01)
+        #self.optimizer = Hazelnut.modules.Optimizers.SGDM(learning_rate=0.02, momentum_weight=0.48)
+        self.optimizer = Hazelnut.modules.Optimizers.RProp()
+
+        self.add(Softmax())
+        self.loss = CrossEntropy()
 
         self.mode = 'gpu'
 
