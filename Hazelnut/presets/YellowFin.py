@@ -5,7 +5,7 @@ class NN(Base_NN):
     """
     Neural net with YellowFin
     """
-    def __init__(self, beta=0.999, slow_start=True, gradient_clip=True, sliding_window=20):
+    def __init__(self, beta=0.9, slow_start=True, gradient_clip=True, sliding_window=20):
         """
         Make sure to super().__init__()
 
@@ -94,10 +94,12 @@ class NN(Base_NN):
         root = x ** 2
         dr = self.np.maximum( (self.h_max + self.epsilon) / (self.h_min + self.epsilon), 1.0 + self.epsilon)
         momentum = self.np.maximum(root, ((self.np.sqrt(dr) - 1) / (self.np.sqrt(dr) + 1))**2)
-        learning_rate = self.np.square(1 - self.np.sqrt(momentum)) / self.h_min
+        learning_rate = self.np.square(1 - self.np.sqrt(momentum)) / (self.h_min + self.epsilon)
 
         if self.slow_start:
             learning_rate = min(learning_rate, self.t * learning_rate / (10 * self.sliding_window))
+
+        print(f"learning_rate: {learning_rate}, momentum: {momentum}")
 
         #Update all the optimizers
         for module in self.layout:
@@ -109,4 +111,39 @@ class NN(Base_NN):
 
         self.t += 1
         
-        super().update()
+        for module in self.layout:
+            try:
+                if self.gradient_clip:
+                    #Grad clip
+                    grad = module.gradient
+                    if type(grad) is tuple:
+                        clipped_grads = []
+                        for sing_grad in grad:
+                            norm = float(self.np.sqrt(self.np.square(sing_grad).sum()))
+                            if norm > self.h_max:
+                                clipped_grads.append(
+                                    (sing_grad / norm) * self.h_max
+                                )
+                        module.gradient = tuple(clipped_grads)
+
+                    else:
+                        norm = float(self.np.sqrt(self.np.square(grad).sum()))
+                        if norm > self.h_max:
+                            module.gradient = (grad / norm) * self.h_max
+
+                module.Update()
+            except AttributeError: #Doesn't have weights that need to be updated
+                pass
+
+    def train(self, inp, correct_out):
+        out = self.forward_train(inp)
+        loss = self.loss.Forward(out, correct_out)
+
+        if self.np.isnan(loss):
+            raise RuntimeError("Loss is NaN")
+            
+        self.backpropagate(self.loss.Backward(out, correct_out))
+
+        self.update()
+
+        return loss, out
