@@ -15,3 +15,9 @@ class GlobalPooling:
         _, C, H, W = shape
         self.HW = H * W
         self.ones = self.np.ones((C, H, W))
+
+    def Save(self):
+        return {'args':(), 'var':(self.HW, self.ones)}
+
+    def Load(self):
+        self.HW, self.ones == 'var'
